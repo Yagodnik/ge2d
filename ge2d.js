@@ -18,11 +18,6 @@ var GE2D_PLUGIN_LIST = [
 		name : "Physics2d",
 		srcWeb : "89.110.48.37:7979/ge2d/plugins/Physics2d-Plugin.js",
 		srcLoc : "plugins/physics2d.js"
-	},
-	{
-		name : "matrix2d",
-		srcWeb : "89.110.48.37:7979/ge2d/plugins/matrix2d.js",
-		srcLoc : "plugins/matrix2d.js"
 	}
 ];
 var GE2D_GAME_OBJECT;
@@ -62,19 +57,28 @@ GE_Speaker.prototype.setLang = function(lang){
 var GE_Keyboard = function(){
 	this.isDown;
 	this.isUp;
+	this.upCode;
+	this.downCode;
 }
 
 var GE_KEYBOARD_CONFIG = {
 	DOWN : 0,
-	UP : 0
+	UP : 0,
+	DOWNCODE : null,
+	UPCODE : null
 };
 
 window.addEventListener("keydown",function(event){
 	GE_KEYBOARD_CONFIG.DOWN = event.key;
+	GE_KEYBOARD_CONFIG.DOWNCODE = event.keyCode;
+	GE_KEYBOARD_CONFIG.UPCODE = null;
+	GE_KEYBOARD_CONFIG.UP = 0;
 },false);
 window.addEventListener("keyup",function(event){
-	GE_KEYBOARD_CONFIG.DOWN = 0;
 	GE_KEYBOARD_CONFIG.UP = event.key;
+	GE_KEYBOARD_CONFIG.UPCODE = event.keyCode;
+	GE_KEYBOARD_CONFIG.DOWNCODE = null;
+	GE_KEYBOARD_CONFIG.DOWN = 0;
 },false);
 //event listeners for keyboard
 
@@ -86,6 +90,16 @@ GE_Keyboard.prototype.downKey = function(){
 GE_Keyboard.prototype.upKey = function(){
 	this.isUp = GE_KEYBOARD_CONFIG.UP;
 	return this.isUp;
+}
+
+GE_Keyboard.prototype.getDownKeyCode = function(){
+	this.downCode = GE2D_KEYBOARD_CONFIG.DOWNCODE;
+	return this.downCode;
+}
+
+GE_Keyboard.prototype.getUpKeyCode = function(){
+	this.upCode = GE2D_KEYBOARD_CONFIG.UPCODE;
+	return this.upCode;
 }
 //End keyboard
 
@@ -148,10 +162,23 @@ const GE_Shape = function(){
 	this.layer = 0;
 	this.lineWidth = 3;
 	this.angle = 0;
+	this.alpha = 1;
 }
 
 GE_Shape.prototype.rotate = function(deg){
+	this.angle = deg;
+}
+
+GE_Shape.prototype.turn = function(deg){
 	this.angle += deg;
+}
+
+GE_Shape.prototype.getAngle = function(){
+	return this.angle;
+}
+
+GE_Shape.prototype.setAlpha = function(a){
+	GE2D_GL[this.layer].globalAlpha = a;
 }
 
 GE_Shape.prototype.move = function(dx,dy){
@@ -171,6 +198,20 @@ GE_Shape.prototype.moveAngle = function(s, angle){
 
 	this.x += dx;
 	this.y += dy;
+}
+
+GE_Shape.prototype.isCollisionEnter = function(b){
+	var aTop = this.y;
+    var aLeft = this.x;
+    var bTop = b.y;
+    var bLeft = b.x;
+ 
+    return !(
+        (aTop + this.h < (bTop)) ||
+        (aTop > (bTop + b.h)) ||
+        ((aLeft + this.w) < bLeft) ||
+        (aLeft > (bLeft + b.w))
+    );
 }
 
 GE_Shape.prototype.show = function(){
@@ -194,6 +235,38 @@ GE_Shape.prototype.setPostion = function(x, y){
 GE_Shape.prototype.setSize = function(w, h){
 	this.w = w;
 	this.h = h;
+}
+
+GE_Shape.prototype.setLineW = function(w){
+	this.lineWidth = w;
+}
+
+GE_Shape.prototype.getLineW = function(h){
+	return this.lineWidth;
+}
+
+GE_Shape.prototype.setW = function(w){
+	this.w = w;
+}
+
+GE_Shape.prototype.setH = function(h){
+	this.h = h;
+}
+
+GE_Shape.prototype.getW = function(){
+	return this.w;
+}
+
+GE_Shape.prototype.getH = function(){
+	return this.h;
+}
+
+GE_Shape.prototype.setR = function(r){
+	this.r = r;
+}
+
+GE_Shape.prototype.getR = function(){
+	return this.r;
 }
 //End shapes
 
@@ -244,6 +317,7 @@ GE_Mouse.prototype.clickTo = function(rect){
 //Touch
 var GE_Touch = function(){
 	this.pressedButton;
+	this.x; this.y;
 }
 
 var GE2D_TOUCH_DATA = {
@@ -282,6 +356,75 @@ GE_Touch.prototype.clickTo = function(rect){
 	return this.pressedButton;
 }
 //End touch
+
+//Events
+const GE2D_EVENTS_DATA = {
+	resize : false,
+	keyDown : false,
+	keyUp : false,
+	mouseMove : false,
+	mouseDown : false
+};
+
+var GE_Events = function(){
+	this.resize = false;
+	this.keyDown = false;
+	this.keyUp = false;
+	this.mouseMove = false;
+	this.mouseDown = false;
+}
+
+window.addEventListener("resize",function(event){
+	GE2D_EVENTS_DATA.resize = true;
+},false);
+
+window.addEventListener("keydown",function(event){
+	GE2D_EVENTS_DATA.keyDown = true;
+	GE2D_EVENTS_DATA.keyUp = false;
+},false);
+
+window.addEventListener("keyup",function(event){
+	GE2D_EVENTS_DATA.keyDown = false;
+	GE2D_EVENTS_DATA.keyUp = true;
+},false);
+
+window.addEventListener("mousemove",function(event){
+	GE2D_EVENTS_DATA.mouseMove = true;
+},false);
+
+window.addEventListener("mousedown",function(event){
+	GE2D_EVENTS_DATA.mouseDown = true;
+},false);
+
+GE_Events.prototype.is = function(eventName){
+	if(eventName === "resize"){
+		this.resize = GE2D_EVENTS_DATA.resize;
+		return this.resize;
+		GE2D_EVENTS_DATA.resize = false;
+		this.resize = false;
+	}
+	if(eventName === "keydown"){
+		this.keyDown = GE2D_EVENTS_DATA.keyDown;
+		return this.keyDown;
+	}
+	if(eventName === "keyup"){
+		this.keyUp = GE2D_EVENTS_DATA.keyUp;
+		return this.keyUp;
+	}
+	if(eventName === "mousemove"){
+		this.mouseMove = GE2D_EVENTS_DATA.mouseMove;
+		return this.mouseMove;
+		GE2D_EVENTS_DATA.mouseMove = false;
+		this.mouseMove = false;
+	}
+	if(eventName === "mousedown"){
+		this.mouseDown = GE2D_EVENTS_DATA.mouseDown;
+		return this.mouseDown;
+		GE2D_EVENTS_DATA.mouseDown = false;
+		this.mouseDown = false;
+	}
+}
+//End Events
 
 //Game
 const GE_Game = function(){
@@ -380,8 +523,14 @@ const GE_Game = function(){
 		this.audio.loop = this.repeat;
 		this.audio.play();
 	}
-	this.Audio.prototype.pause = function() { this.audio.pause(); }	
-	this.Audio.prototype.stop = function(){ //this.audio.stop(); 
+
+	this.Audio.prototype.pause = function() { 
+		this.audio.pause(); 
+	}	
+
+	this.Audio.prototype.stop = function(){
+		this.audio.pause();
+		this.audio.currentTime = 0;
 	}
 
 	//Cross Audio
@@ -405,6 +554,10 @@ GE_Game.prototype.loop = function(loopFunction){
 
 GE_Game.prototype.loopFPS = function(FPS){
 	this.FPS = FPS;
+}
+
+GE_Game.prototype.getLoopFPS = function(){
+	return this.FPS;
 }
 
 GE_Game.prototype.loopStop = function(){
@@ -470,6 +623,17 @@ var GE_Math = function(){};
 GE_Math.prototype.random = function(min, max){
 	return Math.round(min - 0.5 + Math.random() * (max - min + 1));
 }
+
+GE_Math.prototype.toRad = function(deg){
+	return deg * Math.PI / 180;
+}
+
+GE_Math.prototype.choose = function(arr){
+	var min = 0;
+	var max = arr.length;
+	var result = arr[this.random(min,max)];
+	return result;
+}
 //End math
 
 //Display
@@ -496,36 +660,30 @@ const GE_display = function(){
 		//GE2D_GL.push(GE2D_CANVAS.pop().canvas.getContext("2d"));
 		//console.log(GE2D_GL.pop());
 ///console.log(GE2D_CANVAS[1].canvas.height);
-//}
-	this.BoxCollider = function(rect1, rect2){
-		this.r1 = rect1;
-		this.r2 = rect2;
+//}E2D_CAMERA_DATA.y + this.r1.y < this.r2.y + this.r2.h) isCollision = true;
+
+	//Light
+	this.Light = function(x,y,color,r){
+		this.x = x;
+		this.y = y;
+		this.c = color;
+		this.r = r;
 	}
 
-	this.CircleCollider = function(c1, c2){
-		this.r1 = c1;
-		this.r2 = c2;
+	this.Light.prototype.updatePos = function(x,y){
+		this.x = x;
+		this.y = y;
 	}
 
-	this.BoxCollider.prototype.is = function(){
-		//collision detection
-		var isCollision = false;
-		//x > b.x && x < b.x+brickWidth && y > b.y && y < b.y+brickHeight
-		if(-GE2D_CAMERA_DATA.x + this.r1.x > this.r2.x - this.r2.w &&
-		   -GE2D_CAMERA_DATA.x + this.r1.x < this.r2.x + this.r2.w &&
-		   -GE2D_CAMERA_DATA.y + this.r1.y > this.r2.y - this.r2.h && 
-		   -GE2D_CAMERA_DATA.y + this.r1.y < this.r2.y + this.r2.h) isCollision = true;
-		return isCollision;
+	this.Light.prototype.draw = function(l = 0){
+		var g = GE2D_GL[l].createRadialGradient(this.x,this.y,this.r,this.x,this.y,30);
+		g.addColorStop(0,this.c);
+		g.addColorStop(1,"transparent");
+		GE2D_GL[l].fillStyle = g;
+		GE2D_GL[l].fillRect(0,0,GE2D_CANVAS[0].w,GE2D_CANVAS[0].h);
 	}
+	//End Light
 
-	this.CircleCollider.prototype.is = function(){
-		//collision detection
-		var d = 0;
-		var diffX = this.r1.x - this.r2.x;
-		var diffY = this.r1.y - this.r2.y;
-		d = Math.sqrt((diffX * diffX) + (diffY * diffY));
-		return d;
-	}
 }
 
 GE_display.prototype.clear = function(layer = 0){
@@ -533,6 +691,8 @@ GE_display.prototype.clear = function(layer = 0){
 }
 
 GE_display.prototype.draw = function(shape){
+	GE2D_GL[shape.layer].lineWidth = shape.lineWidth;
+
 	switch(shape.type){
 		case GE2D_RECT:
 		/////////////Rect////////////////////
@@ -849,6 +1009,24 @@ GE_display.prototype.backgroundImage = function(bg){
 	GE2D_CANVAS_STYLES[0].style.backgroundImage = "url(" + bg.toString() + ")"
 	GE2D_CANVAS_STYLES[0].style.backgroundRepeat = "norepeat"
 }
+
+GE_display.prototype.getContextOf = function(layer = 0){
+	return GE2D_GL[layer];
+}
+
+GE_display.prototype.fullScreen = function(){
+	this.canvas = document.getElementsByTagName("canvas")[0];
+	this.canvas.webkitRequestFullscreen();
+}
+
+GE_display.prototype.exitFullScreen = function(){
+	this.canvas = document.getElementsByTagName("canvas")[0];
+	this.canvas.webkitExitFullscreen();
+}
+
+GE_display.prototype.fullCanvas = function(){
+	
+}
 //End display
 
 //Accelerometer
@@ -894,6 +1072,14 @@ var GE_ArrayController = function(){
 	this.draw = function(array){
 		for(var i = 0;i < array.length; i++) GE2D_DISPLAY_OBJECT.draw(array[i]);
 	}
+
+	this.show = function(array){
+		for(var i = 0;i < array.length; i++) array[i].show();
+	}
+
+	this.hide = function(array){
+		for(var i = 0;i < array.length; i++) array[i].hide();
+	}
 };
 //End arrays
 
@@ -901,7 +1087,6 @@ var GE_ArrayController = function(){
 var App = function(w = 500,h = 400,ctx = "2d"){
 	this.width = w;
 	this.height = h;
-	this.title = "ge2d engine!";
 
 	//Messages,errors,contexts
 	this.webgl_contexts = [
@@ -913,7 +1098,8 @@ var App = function(w = 500,h = 400,ctx = "2d"){
 
 	this.errors = [
 		"webgl-context-error!",
-		"Undefined shape type!"
+		"Undefined shape type!",
+		"undefined context type!"
 	];
 
 	this.messages = [
@@ -950,6 +1136,8 @@ var App = function(w = 500,h = 400,ctx = "2d"){
 	}else if(ctx === GRAPHICS_2D){
 		this.context.push(this.canvas[0].getContext("2d"));
 		console.log(this.context[0]);
+	}else {
+		console.warn(this.errors[2]);
 	}
 	console.log(ctx);
 
@@ -968,15 +1156,6 @@ var App = function(w = 500,h = 400,ctx = "2d"){
 					}
 					break;
 				} else if(pluginName === "physics2d"){
-					if(loadType === "local"){
-						plugin = document.createElement("script");
-						plugin.src = GE2D_PLUGIN_LIST[i].srcLoc;
-					}else if(loadType === "web"){
-						plugin = document.createElement("script");
-						plugin.src = GE2D_PLUGIN_LIST[i].srcWeb;
-					}
-					break;
-				} else if(pluginName === "matrix2d"){
 					if(loadType === "local"){
 						plugin = document.createElement("script");
 						plugin.src = GE2D_PLUGIN_LIST[i].srcLoc;
