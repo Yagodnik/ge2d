@@ -1,0 +1,48 @@
+@font-face {
+	font-family: 'ROR';
+    src: url(fonts/ROR.ttf);
+}
+
+body {
+	text-align: center;
+	background: black;
+	font-family: 'ROR', cursive;
+}
+
+canvas {
+	border-radius: 15px;
+	z-index: 100;
+}
+
+#text {
+	color: #398425;
+}
+
+#gameover {
+	position: absolute;
+	text-align: center;
+	top: 50%;
+	color: red;
+	left: 50%;
+	transform: translate(-50%, -70%);
+	font-size: 100px;
+}
+
+@keyframes appearance {
+	0% {
+		opacity: 0;
+	}
+
+	100% {
+		opacity: 1;
+	}
+}
+
+.hide {
+	display: none;
+}
+
+.show {
+	display: block;
+	animation: appearance 1s;
+}
