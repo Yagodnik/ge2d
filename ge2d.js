@@ -33,7 +33,8 @@ const GE2D_TEXT = "GE2D-TEXT";
 const GE2D_TRIANGLE = "GE2D-TRIANGLE";
 const GE2D_ELLIPSE = "GE2D-ELLIPSE";
 const GRAPHICS_2D = "2d";
-const GRAPHICS_WEBGL = "gl";
+const WEBGL_2D = "gl";
+var GE2D_USE_GL = false;
 
 //Speaker
 const GE_Speaker = function(lang = "ru-RU"){
@@ -143,15 +144,15 @@ GE_Camera.prototype.setView = function(object){
 	} else {
 		this.viewer.static = false;
 		this.viewer = object;
-	} 
+	}
 }
 //End camera
 
 //Shapes
 const GE_Shape = function(){
-	this.x = 0; 
+	this.x = 0;
 	this.y = 0;
-	this.w = 10; 
+	this.w = 10;
 	this.h = 10;
 	this.dx = 0;
 	this.dy = 0;
@@ -205,7 +206,7 @@ GE_Shape.prototype.isCollisionEnter = function(b){
     var aLeft = this.x;
     var bTop = b.y;
     var bLeft = b.x;
- 
+
     return !(
         (aTop + this.h < (bTop)) ||
         (aTop > (bTop + b.h)) ||
@@ -227,7 +228,7 @@ GE_Shape.prototype.isShow = function(){
 	else return false;
 }
 
-GE_Shape.prototype.setPostion = function(x, y){
+GE_Shape.prototype.setPosition = function(x, y){
 	this.x = x;
 	this.y = y;
 }
@@ -268,27 +269,73 @@ GE_Shape.prototype.setR = function(r){
 GE_Shape.prototype.getR = function(){
 	return this.r;
 }
+
+GE_Shape.prototype.setFillColor = function(c){
+	this.fc = c;
+}
+
+GE_Shape.prototype.setStrokeColor = function(c){
+	this.sc = c;
+}
 //End shapes
+
+//Memory
+var GE_Memory = function(){
+	this.storage;
+}
+
+GE_Memory.prototype.addNew = function(name, value){
+	window.localStorage.setItem(name,value);
+}
+
+GE_Memory.prototype.get = function(name){
+	return window.localStorage.getItem(name);
+}
+
+GE_Memory.prototype.delete = function(name){
+	window.localStorage.removeItem(name);
+}
+//End memory
+
+//System
+var GE_System = function(){
+	this.log = function(text){
+		console.log('ge2dEngine : ' + text);
+	}
+	this.err = function(text){
+		console.error('ge2dEngine : ' + text);
+	}
+	this.warn = function(text){
+		console.warn('ge2dEngine : ' + text);
+	}
+	this.Memory = new GE_Memory();
+}
+//End system
 
 //Mouse
 var GE_Mouse = function(){
 	this.x; this.y;
 	this.pressedButton = 0;
+	this.LEFT = 1;
+	this.CENTER = 2;
+	this.RIGHT = 3;
 }
 
 var GE2D_MOUSE_DATA = {
-	x : 0, y : 0, cb : 0
+	x : 0, y : 0, cb : 0, cb2 : 0
 };
 //Mouse events
 window.addEventListener("mousemove",function(event){
-	GE2D_MOUSE_DATA.x = event.pageX;
-	GE2D_MOUSE_DATA.y = event.pageY;
+	GE2D_MOUSE_DATA.x = event.clientX;
+	GE2D_MOUSE_DATA.y = event.clientY;
 }, false);
 window.addEventListener("mousedown",function(event){
 	GE2D_MOUSE_DATA.bc = event.which;
+	GE2D_MOUSE_DATA.bc2 = 0;
 }, false);
 window.addEventListener("mouseup",function(event){
 	GE2D_MOUSE_DATA.bc = 0;
+	GE2D_MOUSE_DATA.bc2 = event.which;
 }, false);
 ////
 GE_Mouse.prototype.xPos = function(){
@@ -306,11 +353,16 @@ GE_Mouse.prototype.down = function(){
 	return this.pressedButton;
 }
 
-GE_Mouse.prototype.clickTo = function(rect){
-	if(GE2D_MOUSE_DATA.x > rect.x && GE2D_MOUSE_DATA.x < rect.x + rect.w){
-		if(GE2D_MOUSE_DATA.y > rect.y - rect.h && GE2D_MOUSE_DATA.y < rect.y + rect.h) return 1;
-	} else 
-		return 0;
+GE_Mouse.prototype.up = function(){
+	this.upButton = GE2D_MOUSE_DATA.bc2;
+	return this.upButton;
+}
+
+GE_Mouse.prototype.hover = function(rect){
+	if((this.xPos() > rect.x && this.xPos() < rect.x + rect.w) &&
+	   (this.yPos() > rect.y && this.yPos() < rect.y + rect.h)){
+		return true;
+	}else return false;
 }
 //End mouse
 
@@ -351,9 +403,11 @@ GE_Touch.prototype.down = function(){
 	return this.pressedButton;
 }
 
-GE_Touch.prototype.clickTo = function(rect){
-	this.pressedButton = GE2D_MOUSE_DATA.bc;
-	return this.pressedButton;
+GE_Touch.prototype.hover = function(rect){
+	if((this.xPos() > rect.x && this.xPos() < rect.x + rect.w) &&
+	   (this.yPos() > rect.y && this.yPos() < rect.y + rect.h)){
+		return true;
+	}else return false;
 }
 //End touch
 
@@ -472,7 +526,7 @@ const GE_Game = function(){
 		this.sc = sc;
 		this.type = GE2D_TEXT;
 		this.loadFont = function(name,  src){
-			document.write("<style>" + 
+			document.write("<style>" +
 							"@import url('https://fonts.googleapis.com/css?family=Press+Start+2P');"+
 							"@font-face {" +
 							"font-family:'" + name +
@@ -524,9 +578,9 @@ const GE_Game = function(){
 		this.audio.play();
 	}
 
-	this.Audio.prototype.pause = function() { 
-		this.audio.pause(); 
-	}	
+	this.Audio.prototype.pause = function() {
+		this.audio.pause();
+	}
 
 	this.Audio.prototype.stop = function(){
 		this.audio.pause();
@@ -536,7 +590,7 @@ const GE_Game = function(){
 	//Cross Audio
 	this.CrossAudio = function(src,r  = false){
 		this.audio;
-		this.src = src; 
+		this.src = src;
 		this.repeat = r;
 	}
 	this.CrossAudio.prototype.play = function(){this.audio.play();}
@@ -642,25 +696,20 @@ const GE_display = function(){
 	this.g = 2.0;
 	this.b = 1.0;
 	this.a = 1.0;
-	/*this.Layer = function(zi){
-		this.zIndex = zi;		
-		GE2D_CANVAS.push({
-			w : GE2D_CANVAS[0].w, 
-			h : GE2D_CANVAS[0].h, 
-			canvas : document.createElement("canvas")
-		});
-		console.log(GE2D_CANVAS[0].h);
-		/*GE2D_CANVAS.pop().canvas.width = GE2D_CANVAS[0].w;
-		GE2D_CANVAS.pop().canvas.height = GE2D_CANVAS[0].h;*/
-		//console.log(GE2D_CANVAS.pop());
-		/*GE2D_CANVAS.pop().canvas.style.position = "fixed";
-		GE2D_CANVAS.pop().canvas.style.top = "0px";
-		GE2D_CANVAS.pop().canvas.style.left = "0px";*/
-		//document.body.appendChild(GE2D_CANVAS.pop().canvas);
-		//GE2D_GL.push(GE2D_CANVAS.pop().canvas.getContext("2d"));
-		//console.log(GE2D_GL.pop());
-///console.log(GE2D_CANVAS[1].canvas.height);
-//}E2D_CAMERA_DATA.y + this.r1.y < this.r2.y + this.r2.h) isCollision = true;
+	this.Layer = function(zi){
+		this.zIndex = zi;
+		var w = GE2D_CANVAS[0].w;
+		var h = GE2D_CANVAS[0].h;
+		var temp = document.createElement("canvas");
+		temp.width = w;
+		temp.height = h;
+		temp.style.position = "fixed";
+		temp.style.top = "0";
+		temp.style.left = "0";
+		temp.style.zIndex = zi.toString();
+		document.body.appendChild(temp);
+		GE2D_GL.push(temp.getContext("2d"));
+	}
 
 	//Light
 	this.Light = function(x,y,color,r){
@@ -686,13 +735,19 @@ const GE_display = function(){
 
 }
 
+GE_display.prototype.setClearColor = function(r,g,b,a){
+	this.r = r;
+	this.g = g;
+	this.b = b;
+	this.a = a;
+}
+
 GE_display.prototype.clear = function(layer = 0){
-	GE2D_GL[layer].clearRect(0,0,GE2D_CANVAS[layer].w,GE2D_CANVAS[layer].h);
+	GE2D_GL[layer].clearRect(0,0,GE2D_CANVAS[0].w,GE2D_CANVAS[0].h);
 }
 
 GE_display.prototype.draw = function(shape){
 	GE2D_GL[shape.layer].lineWidth = shape.lineWidth;
-
 	switch(shape.type){
 		case GE2D_RECT:
 		/////////////Rect////////////////////
@@ -727,7 +782,7 @@ GE_display.prototype.draw = function(shape){
 				if(shape.fc !== undefined){
 					GE2D_GL[shape.layer].fillStyle = shape.fc;
 					GE2D_GL[shape.layer].fillRect(x,y,shape.w,shape.h);
-				}			
+				}
 				if(shape.sc !== undefined){
 					GE2D_GL[shape.layer].strokeStyle = shape.sc;
 					GE2D_GL[shape.layer].lineWidth = shape.lineWidth;
@@ -798,7 +853,7 @@ GE_display.prototype.draw = function(shape){
 				if(shape.fc !== undefined){
 					GE2D_GL[shape.layer].fillStyle = shape.fc;
 					GE2D_GL[shape.layer].fill();
-				}			
+				}
 				if(shape.sc !== undefined){
 					GE2D_GL[shape.layer].strokeStyle = shape.sc;
 					GE2D_GL[shape.layer].lineWidth = shape.lineWidth;
@@ -812,7 +867,7 @@ GE_display.prototype.draw = function(shape){
 			GE2D_GL[shape.layer].font = String(shape.fontsize) + "px " + shape.fontname;
 			GE2D_GL[shape.layer].textBaseAlign = shape.basealign;
 			GE2D_GL[shape.layer].textAlign = shape.textalign;
-			
+
 			var dx, dy, x, y;
 			if(shape.angle !== 0){
 				GE2D_GL[shape.layer].save();
@@ -844,7 +899,7 @@ GE_display.prototype.draw = function(shape){
 				if(shape.fc !== undefined){
 					GE2D_GL[shape.layer].fillStyle = shape.fc;
 					GE2D_GL[shape.layer].fillText(shape.text,x,y);
-				}			
+				}
 				if(shape.sc !== undefined){
 					GE2D_GL[shape.layer].strokeStyle = shape.sc;
 					GE2D_GL[shape.layer].lineWidth = shape.lineWidth;
@@ -859,18 +914,18 @@ GE_display.prototype.draw = function(shape){
 			break;
 		case GE2D_TRIANGLE:
 			//debugger;
-			//////////Triangle////////////////////		
+			//////////Triangle////////////////////
 			var dx, dy, x, y;
 			if(shape.angle !== 0){
 				GE2D_GL[shape.layer].save();
 			}
 			//////////////
 			if(!shape.static){
-				dx = -GE2D_CAMERA_DATA.x + (shape.x + shape.w / 2);
-				dy = -GE2D_CAMERA_DATA.y + (shape.y + shape.h / 2);
+				dx = -GE2D_CAMERA_DATA.x + (shape.x1 + shape.x2 + shape.x3 / 3);
+				dy = -GE2D_CAMERA_DATA.y + (shape.y1 + shape.y2 + shape.y3 / 3);
 			} else {
-				dx = shape.x + shape.w / 2;
-				dy = shape.y + shape.h / 2;
+				dx = (shape.x1 + shape.x2 + shape.x3 / 3);
+				dy = (shape.y1 + shape.y2 + shape.y3 / 3);
 			}
 			///////////////////
 			if(shape.angle !== 0){
@@ -897,7 +952,7 @@ GE_display.prototype.draw = function(shape){
 				if(shape.fc !== undefined){
 					GE2D_GL[shape.layer].fillStyle = shape.fc;
 					GE2D_GL[shape.layer].fill();
-				}			
+				}
 				if(shape.sc !== undefined){
 					GE2D_GL[shape.layer].strokeStyle = shape.sc;
 					GE2D_GL[shape.layer].stroke();
@@ -983,7 +1038,7 @@ GE_display.prototype.draw = function(shape){
 				if(shape.fc !== undefined){
 					GE2D_GL[shape.layer].fillStyle = shape.fc;
 					GE2D_GL[shape.layer].fill();
-				}			
+				}
 				if(shape.sc !== undefined){
 					GE2D_GL[shape.layer].strokeStyle = shape.sc;
 					GE2D_GL[shape.layer].lineWidth = shape.lineWidth;
@@ -1025,7 +1080,7 @@ GE_display.prototype.exitFullScreen = function(){
 }
 
 GE_display.prototype.fullCanvas = function(){
-	
+
 }
 //End display
 
@@ -1108,7 +1163,7 @@ var App = function(w = 500,h = 400,ctx = "2d"){
 	];
 
 	//Import GL helper classes
-	
+
 	//end
 
 	this.canvas = [];
@@ -1125,17 +1180,20 @@ var App = function(w = 500,h = 400,ctx = "2d"){
 		//canvas : this.canvas[0]
 	});
 
-	GE2D_CANVAS_STYLES.push(this.canvas[0]);
-
 	/*GE2D_CANVAS[0].canvas.style.position = "fixed";
 	GE2D_CANVAS[0].canvas.style.top = "0px";
 	GE2D_CANVAS[0].canvas.style.left = "0px";*/
 
-	if(ctx === GRAPHICS_WEBGL){
+	if(ctx === "gl"){
 		//webgl
 	}else if(ctx === GRAPHICS_2D){
 		this.context.push(this.canvas[0].getContext("2d"));
 		console.log(this.context[0]);
+		GE2D_CANVAS_STYLES.push(this.canvas[0]);
+		this.canvas[0].style.position = "fixed";
+		this.canvas[0].style.top = "0";
+		this.canvas[0].style.left = "0";
+		GE2D_USE_GL = false;
 	}else {
 		console.warn(this.errors[2]);
 	}
@@ -1172,9 +1230,14 @@ var App = function(w = 500,h = 400,ctx = "2d"){
 		document.body.appendChild(plugin);
 	}
 
+	this.info = function(){
+		console.log("ge2dEngine : ge2d_DEMO");
+	}
+
 	//App.Game
 	this.Game = new GE_Game();
 	this.display = new GE_display();
+	this.System = new GE_System();
 
 	GE2D_GAME_OBJECT = this.Game;
 	GE2D_DISPLAY_OBJECT = this.display;
