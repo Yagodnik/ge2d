@@ -3,8 +3,11 @@ var app = new App(900,700,GRAPHICS_2D);
 var player = new app.Game.Image(app.width / 2 - (150 / 2), app.height - 30,150,30,"img/paddle.png");
 var ball = new app.Game.Image(app.width / 2 - (26 / 2),app.height / 2 - (26 / 2),26,26,"img/ball.png");
 
-ball.offX = 20;
-ball.offY = -20;
+ball.offX = app.Game.Math.Random(-1,1);
+ball.offY = app.Game.Math.Random(-1,1);
+ball.spd = 15;
+
+player.spd = 10;
 
 var level = [
 	[0,0,0,0,0,0,0,0,0],
@@ -52,16 +55,16 @@ app.Game.loop(function(){
 		app.Game.loopStop();
 	}
 	if(player.isCollisionEnter(ball)) ball.offY = -ball.offY;
-	ball.move(ball.offX,ball.offY);
+	ball.move(ball.spd * ball.offX,ball.spd * ball.offY);
 
 	if('ontouchstart' in window){
 		player.x = app.Game.Touch.xPos();
 	}else {
 		if(app.Game.Keyboard.downKey() === "ArrowRight"){
-			player.move(5,0);
+			player.move(player.spd,0);
 		}
 		if(app.Game.Keyboard.downKey() === "ArrowLeft"){
-			player.move(-5,0);
+			player.move(-player.spd,0);
 		}
 	}
 
