@@ -3,8 +3,8 @@ var app = new App(900,700,GRAPHICS_2D);
 var player = new app.Game.Image(app.width / 2 - (150 / 2), app.height - 30,150,30,"img/paddle.png");
 var ball = new app.Game.Image(app.width / 2 - (26 / 2),app.height / 2 - (26 / 2),26,26,"img/ball.png");
 
-ball.offX = app.Game.Math.Random(-1,1);
-ball.offY = app.Game.Math.Random(-1,1);
+ball.offX = app.Game.Math.random(-1,1);
+ball.offY = app.Game.Math.random(-1,1);
 ball.spd = 15;
 
 player.spd = 10;
