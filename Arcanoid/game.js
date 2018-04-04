@@ -7,7 +7,7 @@ ball.offX = app.Game.Math.random(-1,1);
 ball.offY = app.Game.Math.random(-1,1);
 ball.spd = 10;
 
-player.spd = 10;
+player.spd = 13;
 
 var level = [
 	[0,0,0,0,0,0,0,0,0],
