@@ -5,7 +5,7 @@ var ball = new app.Game.Image(app.width / 2 - (26 / 2),app.height / 2 - (26 / 2)
 
 ball.offX = app.Game.Math.random(-1,1);
 ball.offY = app.Game.Math.random(-1,1);
-ball.spd = 15;
+ball.spd = 10;
 
 player.spd = 10;
 
