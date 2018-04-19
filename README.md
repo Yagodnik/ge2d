@@ -14,3 +14,5 @@ Snake:https://javascriptproger.github.io/ge2d/Snake
 MineSweeper:https://javascriptproger.github.io/ge2d/MineSweeper
 
 Arkanoid:https://javascriptproger.github.io/ge2d/Arcanoid
+
+Ping-Pong:https://javascriptproger.github.io/ge2d/Ping-Pong
