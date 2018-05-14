@@ -5,6 +5,8 @@ Ge2d website : https://javascriptproger.github.io/ge2d.github.io
 
 Spark.ru : https://spark.ru/startup/ge2d
 
+JavaScript.ru : https://javascript.ru/forum/showthread.php?p=485315#post485315
+
 Test Version of ge2d IDE:https://javascriptproger.github.io/ge2d
 
 Examples:
