@@ -1,4 +1,4 @@
-const app = new App(w,h,GRAPHICS_2D);
+const app = new App(500,400,GRAPHICS_2D);
 const game = app.Game;
 const display = app.display;
 const keyboard = game.Keyboard;
