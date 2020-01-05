@@ -11,12 +11,12 @@ var GE2D_CANVAS_STYLES = [];
 var GE2D_PLUGIN_LIST = [
 	{
 		name : "3D",
-		srcWeb : "89.110.48.37:7979/ge2d/plugins/3D-Plugin.js",
+		srcWeb : "/ge2d/plugins/3D-Plugin.js",
 		srcLoc : "plugins/3D.js"
 	},
 	{
 		name : "Physics2d",
-		srcWeb : "89.110.48.37:7979/ge2d/plugins/Physics2d-Plugin.js",
+		srcWeb : "/ge2d/plugins/Physics2d-Plugin.js",
 		srcLoc : "plugins/physics2d.js"
 	}
 ];
